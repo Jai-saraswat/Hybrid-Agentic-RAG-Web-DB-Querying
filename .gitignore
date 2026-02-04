@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+chroma_db/
+faiss_index/
+.env
+.ipynb_checkpoints/
+idea/
