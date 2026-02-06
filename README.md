@@ -5,9 +5,9 @@
 [![LangChain](https://img.shields.io/badge/LangChain-0.2.6-green.svg)](https://langchain.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.1.19-orange.svg)](https://github.com/langchain-ai/langgraph)
 
-A sophisticated **Agentic RAG (Retrieval-Augmented Generation)** pipeline built with **LangGraph** and **LangChain** that intelligently routes user queries to appropriate data sources using AI-powered decision making. The system combines PDF-based document retrieval with conversational AI capabilities, leveraging FAISS vector search and HuggingFace embeddings for efficient semantic search.
+A sophisticated **Agentic RAG (Retrieval-Augmented Generation)** pipeline built with **LangGraph** and **LangChain** that intelligently routes user queries to appropriate data sources using AI-powered decision making. The system combines PDF-based document retrieval, Web-based retrieval with conversational AI capabilities, leveraging FAISS vector search and HuggingFace embeddings for efficient semantic search.
 
-> **⚠️ Current Status:** This is the **initial pipeline** focusing on PDF-based RAG and conversational chat. **Web querying capabilities** will be added in the next phase to allow the agent to retrieve real-time context from the web.
+> **⚠️ Current Status:** Both the Initial Agentic RAG and Web Querying pipelines have been made. Integration is in progress.
 
 ---
 
@@ -34,7 +34,70 @@ The system implements an **Agentic RAG architecture** using LangGraph's state ma
 - Respond using general conversational AI (Chat mode)
 - **(Coming Soon)** Fetch real-time information from the web (Web Search mode)
 
-### Architecture Diagram
+### Architecture Diagram for Web Querying Pipeline
+```
+┌──────────────────────────────────────────────────────────────┐
+│                          USER QUERY                           │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                  QUERY GENERATION LAYER                      │
+│  - spaCy Semantic Analysis (NER, Noun Chunks, POS)          │
+│  - Tokenization & Phrase Protection                          │
+│  - LLM Reformulation (Groq GPT-OSS-120B → 5 Queries)        │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                     WEB SEARCH LAYER                         │
+│  - Bing Search Execution                                     │
+│  - URL Extraction & Decoding                                 │
+│  - Duplicate Removal                                         │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                 CONTENT RETRIEVAL LAYER                      │
+│  - HTTP Fetch (Headers, Timeout)                             │
+│  - Main Text Extraction (Readability + Fallback HTML)       │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                VALIDATION & SCORING LAYER                    │
+│  - English Check                                             │
+│  - Keyword Match                                             │
+│  - Trusted Domain Boost                                      │
+│  - Length Heuristics → Page Score Filter                     │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                DOCUMENT & CHUNKING LAYER                     │
+│  - JSON Document Assembly                                    │
+│  - Text Cleaning & Word Chunking (120 / min 15)             │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│              EMBEDDING & VECTOR DATABASE LAYER               │
+│  - MiniLM-L6-v2 Embeddings (384-Dim)                         │
+│  - FAISS Index Build & Save                                  │
+│  - FAISS Load & Similarity Search (Top-K=3)                  │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────────┐
+│                        FINAL OUTPUT                          │
+│  - Retrieved Chunks                                          │
+│  - Document Count                                            │
+│  - Chunk Count                                               │
+│  - RAG-Ready Context                                         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Architecture Diagram For Agentic Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -94,7 +157,7 @@ The system implements an **Agentic RAG architecture** using LangGraph's state ma
 
 ---
 
-## 🔄 System Flow
+## 🔄 Current Main System Flow
 
 ### 1. Document Ingestion Pipeline
 ```
